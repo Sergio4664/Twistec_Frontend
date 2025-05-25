@@ -1,20 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TwisTec</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TwistTec</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <div class="container">
+  <main>
     <h1>TwistTec</h1>
-    <textarea id="twistInput" placeholder="Escribe tu twist..."></textarea>
-    <button id="postTwist">Publicar Twist</button>
-    
-    <div id="twistContainer" class="twist-container"></div>
-  </div>
-  
-  <script type="module" src="main.js"></script>
+    <section class="new-twist">
+      <textarea id="twistInput" placeholder="Escribe tu twist..." maxlength="280"></textarea>
+      <button id="publishBtn" class="icon-button" aria-label="Agregar hilo">
+        <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Agregar hilo</span>
+      </button>
+    </section>
+    <section id="twistsContainer" class="twists-container">
+      <!-- Aquí aparecerán los twists publicados -->
+    </section>
+  </main>
+  <script src="src/main.js"></script>
 </body>
+
 </html>

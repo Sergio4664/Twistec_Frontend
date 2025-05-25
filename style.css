@@ -1,63 +1,153 @@
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f4f6f9;
+/* Reset básico */
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
 }
 
-.container {
-  width: 100%;
-  max-width: 600px;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f8fa;
+  color: #333;
   padding: 20px;
+}
+
+main {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 h1 {
   text-align: center;
-  color: #2c3e50;
-}
-
-textarea {
-  width: 100%;
-  height: 80px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  resize: none;
-}
-
-button {
-  margin-top: 10px;
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background-color: #3498db;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #2980b9;
-}
-
-.twist-container {
-  margin-top: 20px;
-}
-
-.twist-thread {
   margin-bottom: 20px;
-  border-left: 3px solid #3498db;
-  padding-left: 10px;
+  color: #1da1f2;
+}
+
+.new-twist {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+textarea#twistInput {
+  flex: 1;
+  resize: none;
+  padding: 10px;
+  font-size: 16px;
+  border: 1.5px solid #ccc;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.3s ease;
+  min-height: 80px;
+}
+
+textarea#twistInput:focus {
+  border-color: #1da1f2;
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1da1f2;
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.icon-button:hover {
+  background-color: #0d8ddb;
+}
+
+.icon-button svg {
+  stroke: white;
+}
+
+.twists-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .twist {
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 10px;
+  background-color: white;
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  font-size: 15px;
+  position: relative;
+}
+
+.twist.threaded {
+  margin-left: 30px;
+  border-left: 3px solid #1da1f2;
+  padding-left: 15px;
+  margin-top: 10px;
   margin-bottom: 10px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.05);
+}
+
+.acciones-twist {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-responder,
+.btn-eliminar {
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.btn-responder:hover,
+.btn-eliminar:hover {
+  background-color: #0d8ddb;
+}
+
+.reply-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  font-size: 14px;
+  border: 1.5px solid #ccc;
+  border-radius: 12px;
+  outline: none;
+  resize: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.reply-input:focus {
+  border-color: #1da1f2;
+  box-shadow: 0 0 5px rgba(29, 161, 242, 0.3);
+}
+
+.reply-send-btn {
+  margin-top: 8px;
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.reply-send-btn:hover {
+  background-color: #0d8ddb;
 }
