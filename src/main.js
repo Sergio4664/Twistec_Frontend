@@ -1,5 +1,6 @@
 var twists = [];
 var twistIdCounter = 1;
+var MAX_RESPUESTA_PROFUNDIDAD = 2;
 var twistInput = document.getElementById('twistInput');
 var publishBtn = document.getElementById('publishBtn');
 var twistsContainer = document.getElementById('twistsContainer');
@@ -9,6 +10,7 @@ function publishTwist(content, parentId) {
         id: twistIdCounter++,
         parentId: parentId,
         content: content.trim(),
+        timestamp: new Date().toLocaleString(),
         children: [],
     };
     if (parentId === null) {
@@ -46,6 +48,18 @@ function eliminarTwist(id, list) {
     }
     return false;
 }
+function calcularProfundidad(twist) {
+    var profundidad = 0;
+    var actual = twist;
+    while (actual.parentId !== null) {
+        var padre = findTwistById(actual.parentId, twists);
+        if (!padre)
+            break;
+        profundidad++;
+        actual = padre;
+    }
+    return profundidad;
+}
 function renderTwists() {
     twistsContainer.innerHTML = '';
     for (var _i = 0, twists_1 = twists; _i < twists_1.length; _i++) {
@@ -62,12 +76,23 @@ function createTwistElement(twist) {
     var p = document.createElement('p');
     p.textContent = twist.content;
     div.appendChild(p);
+    var fecha = document.createElement('small');
+    fecha.textContent = "Publicado: ".concat(twist.timestamp);
+    fecha.style.display = "block";
+    fecha.style.color = "#666";
+    fecha.style.marginTop = "4px";
+    fecha.style.fontSize = "12px";
+    div.appendChild(fecha);
     var acciones = document.createElement('div');
     acciones.className = 'acciones-twist';
-    var replyBtn = document.createElement('button');
-    replyBtn.textContent = 'Responder';
-    replyBtn.className = 'btn-responder';
-    replyBtn.addEventListener('click', function () { return openReplyInput(div, twist.id); });
+    var profundidad = calcularProfundidad(twist);
+    if (profundidad < MAX_RESPUESTA_PROFUNDIDAD) {
+        var replyBtn = document.createElement('button');
+        replyBtn.textContent = 'Responder';
+        replyBtn.className = 'btn-responder';
+        replyBtn.addEventListener('click', function () { return openReplyInput(div, twist.id); });
+        acciones.appendChild(replyBtn);
+    }
     var deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Eliminar';
     deleteBtn.className = 'btn-eliminar';
@@ -75,7 +100,6 @@ function createTwistElement(twist) {
         eliminarTwist(twist.id);
         renderTwists();
     });
-    acciones.appendChild(replyBtn);
     acciones.appendChild(deleteBtn);
     div.appendChild(acciones);
     for (var _i = 0, _a = twist.children; _i < _a.length; _i++) {

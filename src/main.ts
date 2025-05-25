@@ -2,11 +2,13 @@ interface Twist {
   id: number;
   parentId: number | null;
   content: string;
+  timestamp: string;
   children: Twist[];
 }
 
 let twists: Twist[] = [];
 let twistIdCounter = 1;
+const MAX_RESPUESTA_PROFUNDIDAD = 2;
 
 const twistInput = document.getElementById('twistInput') as HTMLTextAreaElement;
 const publishBtn = document.getElementById('publishBtn') as HTMLButtonElement;
@@ -17,6 +19,7 @@ function publishTwist(content: string, parentId: number | null = null) {
     id: twistIdCounter++,
     parentId,
     content: content.trim(),
+    timestamp: new Date().toLocaleString(),
     children: [],
   };
 
@@ -53,6 +56,18 @@ function eliminarTwist(id: number, list: Twist[] = twists): boolean {
   return false;
 }
 
+function calcularProfundidad(twist: Twist): number {
+  let profundidad = 0;
+  let actual = twist;
+  while (actual.parentId !== null) {
+    const padre = findTwistById(actual.parentId, twists);
+    if (!padre) break;
+    profundidad++;
+    actual = padre;
+  }
+  return profundidad;
+}
+
 function renderTwists() {
   twistsContainer.innerHTML = '';
   for (const twist of twists) {
@@ -70,13 +85,25 @@ function createTwistElement(twist: Twist): HTMLElement {
   p.textContent = twist.content;
   div.appendChild(p);
 
+  const fecha = document.createElement('small');
+  fecha.textContent = `Publicado: ${twist.timestamp}`;
+  fecha.style.display = "block";
+  fecha.style.color = "#666";
+  fecha.style.marginTop = "4px";
+  fecha.style.fontSize = "12px";
+  div.appendChild(fecha);
+
   const acciones = document.createElement('div');
   acciones.className = 'acciones-twist';
 
-  const replyBtn = document.createElement('button');
-  replyBtn.textContent = 'Responder';
-  replyBtn.className = 'btn-responder';
-  replyBtn.addEventListener('click', () => openReplyInput(div, twist.id));
+  const profundidad = calcularProfundidad(twist);
+  if (profundidad < MAX_RESPUESTA_PROFUNDIDAD) {
+    const replyBtn = document.createElement('button');
+    replyBtn.textContent = 'Responder';
+    replyBtn.className = 'btn-responder';
+    replyBtn.addEventListener('click', () => openReplyInput(div, twist.id));
+    acciones.appendChild(replyBtn);
+  }
 
   const deleteBtn = document.createElement('button');
   deleteBtn.textContent = 'Eliminar';
@@ -86,7 +113,6 @@ function createTwistElement(twist: Twist): HTMLElement {
     renderTwists();
   });
 
-  acciones.appendChild(replyBtn);
   acciones.appendChild(deleteBtn);
   div.appendChild(acciones);
 
