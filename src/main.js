@@ -134,3 +134,21 @@ publishBtn.addEventListener('click', function () {
     }
 });
 renderTwists();
+var toggleBtn = document.getElementById("toggleTema");
+function aplicarTema() {
+    var tema = localStorage.getItem("tema") || "claro";
+    if (tema === "oscuro") {
+        document.body.classList.add("modo-oscuro");
+        toggleBtn.textContent = "☀️";
+    }
+    else {
+        document.body.classList.remove("modo-oscuro");
+        toggleBtn.textContent = "🌙";
+    }
+}
+toggleBtn.addEventListener("click", function () {
+    var nuevoTema = document.body.classList.contains("modo-oscuro") ? "claro" : "oscuro";
+    localStorage.setItem("tema", nuevoTema);
+    aplicarTema();
+});
+aplicarTema(); // aplicar en carga inicial

@@ -5,10 +5,25 @@
   padding: 0;
 }
 
+/* Variables de color por tema */
+:root {
+  --color-fondo: #f5f8fa;
+  --color-texto: #333;
+  --color-twist: #ffffff;
+  --color-acento: #1da1f2;
+}
+
+body.modo-oscuro {
+  --color-fondo: #1a1a1a;
+  --color-texto: #f5f5f5;
+  --color-twist: #2a2a2a;
+  --color-acento: #66ccff;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f8fa;
-  color: #333;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
   padding: 20px;
 }
 
@@ -20,9 +35,26 @@ main {
 h1 {
   text-align: center;
   margin-bottom: 20px;
-  color: #1da1f2;
+  color: var(--color-acento);
 }
 
+.tema-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.tema-toggle button {
+  background: var(--color-acento);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Formulario de nuevo twist */
 .new-twist {
   display: flex;
   gap: 10px;
@@ -42,14 +74,14 @@ textarea#twistInput {
 }
 
 textarea#twistInput:focus {
-  border-color: #1da1f2;
+  border-color: var(--color-acento);
 }
 
 .icon-button {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #1da1f2;
+  background-color: var(--color-acento);
   border: none;
   color: white;
   padding: 10px 16px;
@@ -75,8 +107,9 @@ textarea#twistInput:focus {
   gap: 12px;
 }
 
+/* Tarjeta de twist */
 .twist {
-  background-color: white;
+  background-color: var(--color-twist);
   border-radius: 16px;
   padding: 14px 18px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -86,7 +119,7 @@ textarea#twistInput:focus {
 
 .twist.threaded {
   margin-left: 30px;
-  border-left: 3px solid #1da1f2;
+  border-left: 3px solid var(--color-acento);
   padding-left: 15px;
   margin-top: 10px;
   margin-bottom: 10px;
@@ -101,7 +134,7 @@ textarea#twistInput:focus {
 
 .btn-responder,
 .btn-eliminar {
-  background-color: #1da1f2;
+  background-color: var(--color-acento);
   color: white;
   border: none;
   padding: 6px 12px;
@@ -117,6 +150,7 @@ textarea#twistInput:focus {
   background-color: #0d8ddb;
 }
 
+/* Área de respuesta */
 .reply-input {
   width: 100%;
   margin-top: 10px;
@@ -131,13 +165,13 @@ textarea#twistInput:focus {
 }
 
 .reply-input:focus {
-  border-color: #1da1f2;
+  border-color: var(--color-acento);
   box-shadow: 0 0 5px rgba(29, 161, 242, 0.3);
 }
 
 .reply-send-btn {
   margin-top: 8px;
-  background-color: #1da1f2;
+  background-color: var(--color-acento);
   color: white;
   border: none;
   padding: 8px 16px;
