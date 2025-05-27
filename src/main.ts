@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, push, onValue } from "firebase/database";
+import { getDatabase, ref, push, onValue, remove } from "firebase/database";
 
 // Configuración Firebase
 const firebaseConfig = {
@@ -15,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Interfaz Twist
 interface Twist {
   id: string;
   parentId: string | null;
@@ -29,8 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const twistInput = document.getElementById("twistInput") as HTMLTextAreaElement;
   const publishBtn = document.getElementById("publishBtn") as HTMLButtonElement;
   const twistsContainer = document.getElementById("twistsContainer") as HTMLDivElement;
+  const toggleBtn = document.getElementById("toggleTema") as HTMLButtonElement;
 
-  // ⚠️ Cambia esto a true para forzar reinicio
+  // Alternancia de tema claro/oscuro
+  toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    toggleBtn.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+  });
+
+  // Opcional: forzar reinicio del nombre
   const resetNombre = false;
   if (resetNombre) localStorage.removeItem("usuario");
 
@@ -53,24 +59,16 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   if (!nombreUsuario) {
-    console.log("Nombre no encontrado, mostrando modal...");
     solicitarNombre().then(iniciar);
   } else {
-    console.log("Nombre ya guardado:", nombreUsuario);
     iniciar(nombreUsuario);
   }
 
   function solicitarNombre(): Promise<string> {
-    console.log("Ejecutando solicitarNombre()");
     return new Promise((resolve) => {
       const modal = document.getElementById("nombreModal") as HTMLDivElement;
       const input = document.getElementById("nombreInput") as HTMLInputElement;
       const btn = document.getElementById("confirmarNombre") as HTMLButtonElement;
-
-      if (!modal || !input || !btn) {
-        console.error("❌ No se encontró uno o más elementos del modal");
-        return;
-      }
 
       modal.style.display = "flex";
 
@@ -108,6 +106,11 @@ document.addEventListener("DOMContentLoaded", () => {
     push(ref(db, "twists"), twistData);
   }
 
+  function eliminarTwist(id: string) {
+    const twistRef = ref(db, `twists/${id}`);
+    remove(twistRef);
+  }
+
   function renderTwistsRealtime() {
     onValue(ref(db, "twists"), (snapshot) => {
       const data = snapshot.val();
@@ -117,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const twistList: Twist[] = Object.entries(data).map(([id, value]: any) => ({ id, ...value }));
         const rootTwists = twistList.filter(t => !t.parentId);
         const tree = buildTwistTree(rootTwists, twistList);
-        tree.forEach(t => twistsContainer.appendChild(createTwistElement(t)));
+        tree.forEach(t => twistsContainer.appendChild(renderTwistTree(t)));
       }
     });
   }
@@ -132,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
   }
 
-  function createTwistElement(twist: Twist): HTMLElement {
+  function renderTwistTree(twist: Twist, profundidad: number = 0): HTMLElement {
     const div = document.createElement("div");
     div.classList.add("twist");
     if (twist.parentId) div.classList.add("threaded");
@@ -152,7 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const acciones = document.createElement("div");
     acciones.className = "acciones-twist";
 
-    const profundidad = calcularProfundidad(twist);
     if (profundidad < 2) {
       const replyBtn = document.createElement("button");
       replyBtn.textContent = "Responder";
@@ -161,11 +163,17 @@ document.addEventListener("DOMContentLoaded", () => {
       acciones.appendChild(replyBtn);
     }
 
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Eliminar";
+    deleteBtn.className = "btn-eliminar";
+    deleteBtn.addEventListener("click", () => eliminarTwist(twist.id));
+    acciones.appendChild(deleteBtn);
+
     div.appendChild(acciones);
 
     if (twist.children) {
       twist.children.forEach(child => {
-        const childElem = createTwistElement(child);
+        const childElem = renderTwistTree(child, profundidad + 1);
         div.appendChild(childElem);
       });
     }
@@ -191,22 +199,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     parentElem.appendChild(textarea);
     parentElem.appendChild(sendBtn);
-  }
-
-  function calcularProfundidad(twist: Twist): number {
-    let profundidad = 0;
-    let actual = twist;
-    const lookup = new Map<string, Twist>();
-    document.querySelectorAll<HTMLElement>(".twist").forEach(el => {
-      const id = el.dataset?.id;
-      if (id) lookup.set(id, actual);
-    });
-    while (actual.parentId) {
-      const padre = lookup.get(actual.parentId);
-      if (!padre) break;
-      profundidad++;
-      actual = padre;
-    }
-    return profundidad;
   }
 });
