@@ -9,11 +9,15 @@
 </head>
 
 <body>
+  <!-- Botón de modo claro/oscuro -->
   <div class="tema-toggle">
     <button id="toggleTema">🌙</button>
   </div>
+
   <main>
     <h1>TwistTec</h1>
+
+    <!-- Entrada para nuevo twist -->
     <section class="new-twist">
       <textarea id="twistInput" placeholder="Escribe tu twist..." maxlength="280"></textarea>
       <button id="publishBtn" class="icon-button" aria-label="Agregar hilo">
@@ -25,12 +29,22 @@
         <span>Agregar hilo</span>
       </button>
     </section>
-    <section id="twistsContainer" class="twists-container">
-      <!-- Aquí aparecerán los twists publicados -->
-    </section>
+
+    <!-- Contenedor de twists -->
+    <section id="twistsContainer" class="twists-container"></section>
   </main>
 
-  <script src="src/main.js"></script>
+  <!-- Modal de nombre -->
+  <div id="nombreModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2>Ingresa tu nombre</h2>
+      <input type="text" id="nombreInput" placeholder="Tu nombre..." />
+      <button id="confirmarNombre">Continuar</button>
+    </div>
+  </div>
+
+  <!-- Script compilado con Webpack -->
+  <script src="dist/main.js"></script>
 </body>
 
 </html>
