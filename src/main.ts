@@ -1,176 +1,203 @@
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, push, onValue, remove } from "firebase/database";
+
+// Configuración Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyAmJiDyecVAWWocMg1fEdiODEW4rkd3V4",
+  authDomain: "twistec-ef032.firebaseapp.com",
+  databaseURL: "https://twistec-ef032-default-rtdb.firebaseio.com",
+  projectId: "twistec-ef032",
+  storageBucket: "twistec-ef032.appspot.com",
+  messagingSenderId: "855346673295",
+  appId: "1:855346673295:web:8362e691db063a240122fa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 interface Twist {
-  id: number;
-  parentId: number | null;
+  id: string;
+  parentId: string | null;
   content: string;
   timestamp: string;
-  children: Twist[];
+  author: string;
+  children?: Twist[];
 }
 
-let twists: Twist[] = [];
-let twistIdCounter = 1;
-const MAX_RESPUESTA_PROFUNDIDAD = 2;
+document.addEventListener("DOMContentLoaded", () => {
+  const twistInput = document.getElementById("twistInput") as HTMLTextAreaElement;
+  const publishBtn = document.getElementById("publishBtn") as HTMLButtonElement;
+  const twistsContainer = document.getElementById("twistsContainer") as HTMLDivElement;
+  const toggleBtn = document.getElementById("toggleTema") as HTMLButtonElement;
 
-const twistInput = document.getElementById('twistInput') as HTMLTextAreaElement;
-const publishBtn = document.getElementById('publishBtn') as HTMLButtonElement;
-const twistsContainer = document.getElementById('twistsContainer') as HTMLDivElement;
+  // Alternancia de tema claro/oscuro
+  toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    toggleBtn.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+  });
 
-function publishTwist(content: string, parentId: number | null = null) {
-  const newTwist: Twist = {
-    id: twistIdCounter++,
-    parentId,
-    content: content.trim(),
-    timestamp: new Date().toLocaleString(),
-    children: [],
+  // Opcional: forzar reinicio del nombre
+  const resetNombre = false;
+  if (resetNombre) localStorage.removeItem("usuario");
+
+  let nombreUsuario = localStorage.getItem("usuario") || "";
+
+  const iniciar = (nombre: string) => {
+    nombreUsuario = nombre;
+    localStorage.setItem("usuario", nombre);
+    registrarIngreso(nombreUsuario);
+
+    publishBtn.addEventListener("click", () => {
+      const content = twistInput.value.trim();
+      if (content !== "") {
+        publishTwist(content);
+        twistInput.value = "";
+      }
+    });
+
+    renderTwistsRealtime();
   };
 
-  if (parentId === null) {
-    twists.push(newTwist);
+  if (!nombreUsuario) {
+    solicitarNombre().then(iniciar);
   } else {
-    const parent = findTwistById(parentId, twists);
-    if (parent) {
-      parent.children.push(newTwist);
+    iniciar(nombreUsuario);
+  }
+
+  function solicitarNombre(): Promise<string> {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("nombreModal") as HTMLDivElement;
+      const input = document.getElementById("nombreInput") as HTMLInputElement;
+      const btn = document.getElementById("confirmarNombre") as HTMLButtonElement;
+
+      modal.style.display = "flex";
+
+      const confirmar = () => {
+        const nombre = input.value.trim();
+        if (nombre !== "") {
+          modal.style.display = "none";
+          resolve(nombre);
+        } else {
+          input.focus();
+        }
+      };
+
+      btn.addEventListener("click", confirmar);
+      input.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") confirmar();
+      });
+    });
+  }
+
+  function registrarIngreso(nombre: string) {
+    push(ref(db, "usuarios"), {
+      nombre,
+      fecha: new Date().toISOString()
+    });
+  }
+
+  function publishTwist(content: string, parentId: string | null = null) {
+    const twistData = {
+      parentId,
+      content: content.trim(),
+      timestamp: new Date().toLocaleString(),
+      author: nombreUsuario
+    };
+    push(ref(db, "twists"), twistData);
+  }
+
+  function eliminarTwist(id: string) {
+    const twistRef = ref(db, `twists/${id}`);
+    remove(twistRef);
+  }
+
+  function renderTwistsRealtime() {
+    onValue(ref(db, "twists"), (snapshot) => {
+      const data = snapshot.val();
+      twistsContainer.innerHTML = "";
+
+      if (data) {
+        const twistList: Twist[] = Object.entries(data).map(([id, value]: any) => ({ id, ...value }));
+        const rootTwists = twistList.filter(t => !t.parentId);
+        const tree = buildTwistTree(rootTwists, twistList);
+        tree.forEach(t => twistsContainer.appendChild(renderTwistTree(t)));
+      }
+    });
+  }
+
+  function buildTwistTree(roots: Twist[], all: Twist[]): Twist[] {
+    return roots.map(root => ({
+      ...root,
+      children: all.filter(t => t.parentId === root.id).map(child => ({
+        ...child,
+        children: all.filter(t2 => t2.parentId === child.id)
+      }))
+    }));
+  }
+
+  function renderTwistTree(twist: Twist, profundidad: number = 0): HTMLElement {
+    const div = document.createElement("div");
+    div.classList.add("twist");
+    if (twist.parentId) div.classList.add("threaded");
+
+    const p = document.createElement("p");
+    p.innerHTML = `<strong>${twist.author}</strong>: ${twist.content}`;
+    div.appendChild(p);
+
+    const fecha = document.createElement("small");
+    fecha.textContent = `Publicado: ${twist.timestamp}`;
+    fecha.style.display = "block";
+    fecha.style.color = "#666";
+    fecha.style.marginTop = "4px";
+    fecha.style.fontSize = "12px";
+    div.appendChild(fecha);
+
+    const acciones = document.createElement("div");
+    acciones.className = "acciones-twist";
+
+    if (profundidad < 2) {
+      const replyBtn = document.createElement("button");
+      replyBtn.textContent = "Responder";
+      replyBtn.className = "btn-responder";
+      replyBtn.addEventListener("click", () => openReplyInput(div, twist.id));
+      acciones.appendChild(replyBtn);
     }
-  }
 
-  renderTwists();
-}
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Eliminar";
+    deleteBtn.className = "btn-eliminar";
+    deleteBtn.addEventListener("click", () => eliminarTwist(twist.id));
+    acciones.appendChild(deleteBtn);
 
-function findTwistById(id: number, list: Twist[]): Twist | null {
-  for (const twist of list) {
-    if (twist.id === id) return twist;
-    const found = findTwistById(id, twist.children);
-    if (found) return found;
-  }
-  return null;
-}
+    div.appendChild(acciones);
 
-function eliminarTwist(id: number, list: Twist[] = twists): boolean {
-  for (let i = 0; i < list.length; i++) {
-    if (list[i].id === id) {
-      list.splice(i, 1);
-      return true;
-    } else if (eliminarTwist(id, list[i].children)) {
-      return true;
+    if (twist.children) {
+      twist.children.forEach(child => {
+        const childElem = renderTwistTree(child, profundidad + 1);
+        div.appendChild(childElem);
+      });
     }
-  }
-  return false;
-}
 
-function calcularProfundidad(twist: Twist): number {
-  let profundidad = 0;
-  let actual = twist;
-  while (actual.parentId !== null) {
-    const padre = findTwistById(actual.parentId, twists);
-    if (!padre) break;
-    profundidad++;
-    actual = padre;
-  }
-  return profundidad;
-}
-
-function renderTwists() {
-  twistsContainer.innerHTML = '';
-  for (const twist of twists) {
-    const elem = createTwistElement(twist);
-    twistsContainer.appendChild(elem);
-  }
-}
-
-function createTwistElement(twist: Twist): HTMLElement {
-  const div = document.createElement('div');
-  div.classList.add('twist');
-  if (twist.parentId !== null) div.classList.add('threaded');
-
-  const p = document.createElement('p');
-  p.textContent = twist.content;
-  div.appendChild(p);
-
-  const fecha = document.createElement('small');
-  fecha.textContent = `Publicado: ${twist.timestamp}`;
-  fecha.style.display = "block";
-  fecha.style.color = "#666";
-  fecha.style.marginTop = "4px";
-  fecha.style.fontSize = "12px";
-  div.appendChild(fecha);
-
-  const acciones = document.createElement('div');
-  acciones.className = 'acciones-twist';
-
-  const profundidad = calcularProfundidad(twist);
-  if (profundidad < MAX_RESPUESTA_PROFUNDIDAD) {
-    const replyBtn = document.createElement('button');
-    replyBtn.textContent = 'Responder';
-    replyBtn.className = 'btn-responder';
-    replyBtn.addEventListener('click', () => openReplyInput(div, twist.id));
-    acciones.appendChild(replyBtn);
+    return div;
   }
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = 'Eliminar';
-  deleteBtn.className = 'btn-eliminar';
-  deleteBtn.addEventListener('click', () => {
-    eliminarTwist(twist.id);
-    renderTwists();
-  });
+  function openReplyInput(parentElem: HTMLElement, parentId: string) {
+    if (parentElem.querySelector(".reply-input")) return;
 
-  acciones.appendChild(deleteBtn);
-  div.appendChild(acciones);
+    const textarea = document.createElement("textarea");
+    textarea.className = "reply-input";
+    textarea.placeholder = "Escribe tu respuesta...";
 
-  for (const child of twist.children) {
-    const childElem = createTwistElement(child);
-    div.appendChild(childElem);
-  }
+    const sendBtn = document.createElement("button");
+    sendBtn.textContent = "Publicar";
+    sendBtn.className = "reply-send-btn";
+    sendBtn.addEventListener("click", () => {
+      if (textarea.value.trim() !== "") {
+        publishTwist(textarea.value, parentId);
+      }
+    });
 
-  return div;
-}
-
-function openReplyInput(parentElem: HTMLElement, parentId: number) {
-  if (parentElem.querySelector('.reply-input')) return;
-
-  const textarea = document.createElement('textarea');
-  textarea.className = 'reply-input';
-  textarea.placeholder = 'Escribe tu respuesta...';
-
-  const sendBtn = document.createElement('button');
-  sendBtn.textContent = 'Publicar';
-  sendBtn.className = 'reply-send-btn';
-  sendBtn.addEventListener('click', () => {
-    if (textarea.value.trim() !== '') {
-      publishTwist(textarea.value, parentId);
-    }
-  });
-
-  parentElem.appendChild(textarea);
-  parentElem.appendChild(sendBtn);
-}
-
-publishBtn.addEventListener('click', () => {
-  const content = twistInput.value.trim();
-  if (content !== '') {
-    publishTwist(content, null);
-    twistInput.value = '';
+    parentElem.appendChild(textarea);
+    parentElem.appendChild(sendBtn);
   }
 });
-
-renderTwists();
-
-const toggleBtn = document.getElementById("toggleTema") as HTMLButtonElement;
-
-function aplicarTema() {
-  const tema = localStorage.getItem("tema") || "claro";
-  if (tema === "oscuro") {
-    document.body.classList.add("modo-oscuro");
-    toggleBtn.textContent = "☀️";
-  } else {
-    document.body.classList.remove("modo-oscuro");
-    toggleBtn.textContent = "🌙";
-  }
-}
-
-toggleBtn.addEventListener("click", () => {
-  const nuevoTema = document.body.classList.contains("modo-oscuro") ? "claro" : "oscuro";
-  localStorage.setItem("tema", nuevoTema);
-  aplicarTema();
-});
-
-aplicarTema(); // aplicar en carga inicial
